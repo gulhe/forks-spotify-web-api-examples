@@ -6,36 +6,30 @@
  * For more information, read
  * https://developer.spotify.com/documentation/web-api/tutorials/client-credentials-flow
  */
+const {client_id,client_secret} = require('./credentials');
 
-const client_id = 'YourClientId'; 
-const client_secret = 'YourClientSecret';
-
-async function getToken() {
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
+function getToken() {
+  return fetch(`https://accounts.spotify.com/api/token`, {
+    method: "POST",
     body: new URLSearchParams({
-      'grant_type': 'client_credentials',
+      'grant_type': `client_credentials`,
     }),
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64')),
+      'Content-Type': `application/x-www-form-urlencoded`,
+      'Authorization': `Basic ${Buffer.from(client_id + ':' + client_secret).toString('base64')}`,
     },
-  });
-
-  return await response.json();
+  }).then(x=>x.json());
 }
 
-async function getTrackInfo(access_token) {
-  const response = await fetch("https://api.spotify.com/v1/tracks/4cOdK2wGLETKBW3PvgPWqT", {
-    method: 'GET',
-    headers: { 'Authorization': 'Bearer ' + access_token },
-  });
-
-  return await response.json();
+function getTrackInfo(access_token) {
+  return fetch(`https://api.spotify.com/v1/tracks/4cOdK2wGLETKBW3PvgPWqT`, {
+    method: `GET`,
+    headers: {'Authorization': `Bearer ${access_token}`},
+  }).then(x=>x.json());
 }
 
-getToken().then(response => {
-  getTrackInfo(response.access_token).then(profile => {
-    console.log(profile)
-  })
-});
+getToken()
+    .then(response => response.access_token)
+    .then(getTrackInfo)
+    .then(JSON.stringify)
+    .then(console.log)
