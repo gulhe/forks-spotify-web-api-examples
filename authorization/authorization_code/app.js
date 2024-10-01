@@ -40,7 +40,7 @@ app.get('/login', function(req, res) {
   res.cookie(stateKey, state);
 
   // your application requests authorization
-  var scope = 'user-read-private user-read-email';
+  var scope = 'user-read-private user-read-email user-modify-playback-state';
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -50,6 +50,28 @@ app.get('/login', function(req, res) {
       state: state
     }));
 });
+
+function volumeSet(options, volume = 50, callBack = (error, response, body) => console.log({error, response, body})) {
+  request.put(
+      {
+        ...options,
+        url: `https://api.spotify.com/v1/me/player/volume?volume_percent=${volume}`
+      },
+      callBack
+  );
+}
+
+function soundWave(options) {
+  volumeSet(options, 0);
+  setTimeout(()=>volumeSet(
+      options,
+      50,
+      (error, response, body) => console.log({
+        error:JSON.stringify(error).length,
+        response: JSON.stringify(response).length,
+        body: JSON.stringify(body)?.length
+      })), 1000)
+}
 
 app.get('/callback', function(req, res) {
 
@@ -95,8 +117,10 @@ app.get('/callback', function(req, res) {
 
         // use the access token to access the Spotify Web API
         request.get(options, function(error, response, body) {
-          console.log(body);
+          console.log(`on a chopé le body sur ${options.url}`);
         });
+
+        soundWave(options);
 
         // we can also pass the token to the browser to make requests from there
         res.redirect('/#' +
